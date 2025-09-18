@@ -1,13 +1,18 @@
 import { Router, Request, Response } from 'express';
 import { authors, Author } from '../models/Author';
 
+// Define CustomError type for error handling
+type CustomError = Error & { status?: number };
+
 const router = Router();
 
 // Create New Author: POST /authors
 router.post('/', (req: Request, res: Response) => {
   const { name, birthYear } = req.body;
   if (!name || typeof birthYear !== 'number') {
-    return res.status(400).json({ error: 'Invalid Data: Name and birthYear are required' });
+    const err = new Error('Invalid Data: Name and birthYear are required') as CustomError;
+    err.status = 400;
+    throw err;
   }
   const id = authors.length + 1;
   const author: Author = { id, name, birthYear };
@@ -24,7 +29,9 @@ router.get('/', (req: Request, res: Response) => {
 router.get('/:id', (req: Request, res: Response) => {
   const author = authors.find(a => a.id === parseInt(req.params.id));
   if (!author) {
-    return res.status(404).json({ error: 'Not Found: Author not found' });
+    const err = new Error('Not Found: Author not found') as CustomError;
+    err.status = 404;
+    throw err;
   }
   res.status(200).json(author);
 });
@@ -33,11 +40,15 @@ router.get('/:id', (req: Request, res: Response) => {
 router.put('/:id', (req: Request, res: Response) => {
   const author = authors.find(a => a.id === parseInt(req.params.id));
   if (!author) {
-    return res.status(404).json({ error: 'Not Found: Author not found' });
+    const err = new Error('Not Found: Author not found') as CustomError;
+    err.status = 404;
+    throw err;
   }
   const { name, birthYear } = req.body;
   if (!name || typeof birthYear !== 'number') {
-    return res.status(400).json({ error: 'Invalid Data: Name and birthYear are required' });
+    const err = new Error('Invalid Data: Name and birthYear are required') as CustomError;
+    err.status = 400;
+    throw err;
   }
   author.name = name;
   author.birthYear = birthYear;
@@ -48,7 +59,9 @@ router.put('/:id', (req: Request, res: Response) => {
 router.delete('/:id', (req: Request, res: Response) => {
   const index = authors.findIndex(a => a.id === parseInt(req.params.id));
   if (index === -1) {
-    return res.status(404).json({ error: 'Not Found: Author not found' });
+    const err = new Error('Not Found: Author not found') as CustomError;
+    err.status = 404;
+    throw err;
   }
   authors.splice(index, 1);
   res.status(204).send();

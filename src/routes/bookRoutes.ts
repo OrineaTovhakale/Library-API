@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { body, validationResult } from 'express-validator';
-import { books , Book} from '../models/Book';
+import { books , Book } from '../models/Book';
 import { authors } from '../models/Author';
 
 const router = Router();
@@ -12,18 +12,24 @@ const validateBook = [
   body('publicationYear').isInt({ min: 0 }).withMessage('Invalid Data: Valid publicationYear is required'),
 ];
 
-// Create New Book: POST /books (enforce valid authorId, check for duplicates)
+// Create New Book: POST /books
 router.post('/', validateBook, (req: Request, res: Response) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(400).json({ error: 'Invalid Data', details: errors.array() });
+    const err = new Error('Invalid Data') as Error & { status?: number };
+    err.status = 400;
+    throw err;
   }
   const { title, authorId, publicationYear } = req.body;
   if (!authors.find(a => a.id === authorId)) {
-    return res.status(400).json({ error: 'Invalid Data: Author does not exist' });
+    const err = new Error('Invalid Data: Author does not exist') as Error & { status?: number };
+    err.status = 400;
+    throw err;
   }
   if (books.some(b => b.title === title && b.authorId === authorId)) {
-    return res.status(409).json({ error: 'Conflict: Duplicate book for this author' });
+    const err = new Error('Conflict: Duplicate book for this author') as Error & { status?: number };
+    err.status = 409;
+    throw err;
   }
   const id = books.length + 1;
   const book: Book = { id, title, authorId, publicationYear };
@@ -40,24 +46,32 @@ router.get('/', (req: Request, res: Response) => {
 router.get('/:id', (req: Request, res: Response) => {
   const book = books.find(b => b.id === parseInt(req.params.id));
   if (!book) {
-    return res.status(404).json({ error: 'Not Found: Book not found' });
+    const err = new Error('Not Found: Book not found') as Error & { status?: number };
+    err.status = 404;
+    throw err;
   }
   res.status(200).json(book);
 });
 
-// Update Book: PUT /books/:id (reuse validation, enforce valid authorId)
+// Update Book: PUT /books/:id
 router.put('/:id', validateBook, (req: Request, res: Response) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(400).json({ error: 'Invalid Data', details: errors.array() });
+    const err = new Error('Invalid Data') as Error & { status?: number };
+    err.status = 400;
+    throw err;
   }
   const book = books.find(b => b.id === parseInt(req.params.id));
   if (!book) {
-    return res.status(404).json({ error: 'Not Found: Book not found' });
+    const err = new Error('Not Found: Book not found') as Error & { status?: number };
+    err.status = 404;
+    throw err;
   }
   const { title, authorId, publicationYear } = req.body;
   if (!authors.find(a => a.id === authorId)) {
-    return res.status(400).json({ error: 'Invalid Data: Author does not exist' });
+    const err = new Error('Invalid Data: Author does not exist') as Error & { status?: number };
+    err.status = 400;
+    throw err;
   }
   book.title = title;
   book.authorId = authorId;
@@ -69,7 +83,9 @@ router.put('/:id', validateBook, (req: Request, res: Response) => {
 router.delete('/:id', (req: Request, res: Response) => {
   const index = books.findIndex(b => b.id === parseInt(req.params.id));
   if (index === -1) {
-    return res.status(404).json({ error: 'Not Found: Book not found' });
+    const err = new Error('Not Found: Book not found') as Error & { status?: number };
+    err.status = 404;
+    throw err;
   }
   books.splice(index, 1);
   res.status(204).send();
