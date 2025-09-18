@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { authors, Author } from '../models/Author';
+import { books } from '../models/Book';
 
 // Define CustomError type for error handling
 type CustomError = Error & { status?: number };
@@ -65,6 +66,18 @@ router.delete('/:id', (req: Request, res: Response) => {
   }
   authors.splice(index, 1);
   res.status(204).send();
+});
+
+router.get('/:id/books', (req: Request, res: Response) => {
+  const authorId = parseInt(req.params.id);
+  const author = authors.find(a => a.id === authorId);
+  if (!author) {
+    const err = new Error('Not Found: Author not found') as CustomError;
+    err.status = 404;
+    throw err;
+  }
+  const authorBooks = books.filter(b => b.authorId === authorId);
+  res.status(200).json(authorBooks);
 });
 
 export default router;
