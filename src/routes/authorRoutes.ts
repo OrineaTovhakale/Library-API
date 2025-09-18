@@ -56,12 +56,17 @@ router.put('/:id', (req: Request, res: Response) => {
   res.status(200).json(author);
 });
 
-// Delete Author: DELETE /authors/:id
+/// Delete Author: DELETE /authors/:id
 router.delete('/:id', (req: Request, res: Response) => {
   const index = authors.findIndex(a => a.id === parseInt(req.params.id));
   if (index === -1) {
     const err = new Error('Not Found: Author not found') as CustomError;
     err.status = 404;
+    throw err;
+  }
+  if (books.some(b => b.authorId === parseInt(req.params.id))) {
+    const err = new Error('Conflict: Cannot delete author with associated books') as CustomError;
+    err.status = 409;
     throw err;
   }
   authors.splice(index, 1);
